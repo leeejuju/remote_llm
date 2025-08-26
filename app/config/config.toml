@@ -1,0 +1,24 @@
+# Global LLM configuration
+[llm]
+model = "qwen2.5-vlm-7b:latest"       # 模型名称
+base_url = "https://localhost:11434//v1" # 模型API
+api_key = "YOUR_API_KEY"                   # 若云端部署需要加上Api-key
+max_tokens = 8192                          # 回答限制的tokens数
+temperature = 0.0                          # 模型温控（控制回答随机性）
+
+[segmentation] # 分割工具
+model = "yolov11-seg.onnx"
+model_location = ""
+model_class = ""
+
+[detection] # 目标检测
+model = "yolov11.onnx"
+model_location = ""
+model_class = ""
+
+[change] # 变化检测
+model = "yolov11.onnx"
+model_location = ""
+model_class = ""
+
+

@@ -1,0 +1,38 @@
+from abc import ABC, abstractmethod
+from typing import Optional
+
+from pydantic import Field
+
+from app.agents.base_agent import BaseAgent
+from app.llm import LLM
+from app.schema.schema import AgentState, Memory
+
+
+class ReActAgent(BaseAgent, ABC):
+    name: str
+    description: Optional[str] = None
+
+    system_prompt: Optional[str] = None
+    next_step_prompt: Optional[str] = None
+
+    llm: Optional[LLM] = Field(default_factory=LLM)
+    memory: Memory = Field(default_factory=Memory)
+    state: AgentState = AgentState.IDLE
+
+    max_steps: int = 10
+    current_step: int = 0
+
+    @abstractmethod
+    async def think(self) -> bool:
+        """处理当前状态，确定下一步的动作 Process current state and decide next action"""
+
+    @abstractmethod
+    async def act(self) -> str:
+        """执行模型思考后的决定Execute decided actions"""
+
+    async def step(self) -> str:
+        """单步执行：单出思考/单纯执行 Execute a single step: think and act."""
+        should_act = await self.think()
+        if not should_act:
+            return "思考完成，无需额外行动 Thinking complete - no action needed"
+        return await self.act()
