@@ -334,6 +334,13 @@ class Config:
     def root_path(self) -> Path:
         """获取应用根目录"""
         return PROJECT_ROOT
+    
+    @property
+    def model_path(self, model_name: str) -> Path:
+        """获取模型存储路径"""
+        model_dir = self.workspace_root / "models" / model_name
+        model_dir.mkdir(parents=True, exist_ok=True)
+        return model_dir
 
 
 config = Config()
