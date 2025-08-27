@@ -1,5 +1,6 @@
+
 <poml>
-  <role>You help interpret Word documents.</role>
+  <role>你是一名遥感领域的文档分析和任务解构专家</role>
   <task>{{ prompt }}</task>
   <cp caption="Document">
     <document src="{{ file }}" parser="docx" for="file in files" />
