@@ -23,30 +23,3 @@ class RSAgentState(MessagesState):
     # 最终输出
     final_decision: Annotated[str, "Final output/result to return to user"]
 
-
-class BaseTool(ABC, BaseModel):
-    name: str
-    description: str
-    parameters: Optional[dict] = None
-
-    class Config:
-        arbitrary_types_allowed = True
-
-    async def __call__(self, **kwargs) -> Any:
-        """基于给定的参数调用"""
-        return await self.execute(**kwargs)
-
-    @abstractmethod
-    async def execute(self, **kwargs) -> Any:
-        """基于给定的参数运行"""
-
-    def to_param(self) -> Dict:
-        """将工具转换为参数字典"""
-        return {
-            "type": "function",
-            "function": {
-                "name": self.name,
-                "description": self.description,
-                "parameters": self.parameters,
-            },
-        }
