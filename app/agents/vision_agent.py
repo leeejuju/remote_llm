@@ -4,7 +4,7 @@ from app.llm import LLM
 from typing import Dict, Any, List
 from app.agents.base_agent import BaseAgent
 from langchain_core.messages import HumanMessage
-from app.schema.schema import QuestionAnswerState
+from app.schema import QuestionAnswerState
 from app.tools.image_segmentation_tool import ImageSegmentationTool
 
 
