@@ -1,12 +1,12 @@
 from typing import Dict, Any
 from app.agents.base_agent import BaseAgent
-from app.schema.schema import QuestionAnswerState
-from app.llm import BaseLLM
+from app.schema import QuestionAnswerState
+from app.llm import LLM
 
 class QAAgent(BaseAgent):
     """纯文本问答Agent"""
     
-    def __init__(self, llm: BaseLLM):
+    def __init__(self, llm: LLM):
         self.llm = llm
     
     async def process_question(self, state: QuestionAnswerState) -> QuestionAnswerState:

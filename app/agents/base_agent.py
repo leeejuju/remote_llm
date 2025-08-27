@@ -5,7 +5,7 @@ from typing import List, Optional
 from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager
 from pydantic import BaseModel, Field, model_validator
-from app.schema.schema import ROLE_TYPE, AgentState, Memory, Message
+from app.schema import ROLE_TYPE, AgentState, Memory, Message
 
 
 # from app.logger import logger
@@ -52,16 +52,16 @@ class BaseAgent(BaseModel, ABC):
         return self
 
     async def state_context(self, new_state: AgentState):
-        """Context manager for safe agent state transitions.
+        """Agent安全的运行的上下文管理方法.
 
         Args:
-            new_state: The state to transition to during the context.
+            new_state: 变换中的过度状态.
 
         Yields:
-            None: Allows execution within the new state.
+            None:
 
         Raises:
-            ValueError: If the new_state is invalid.
+            ValueError: 若new_state不属于任何的状态.
         """
         if not isinstance(new_state, AgentState):
             raise ValueError(f"Invalid state: {new_state}")
@@ -146,35 +146,35 @@ class BaseAgent(BaseModel, ABC):
 
     @abstractmethod
     async def step(self) -> str:
-        """Execute a single step in the agent's workflow.
+        """在agent的workflow工作流中单步执行.
 
         Must be implemented by subclasses to define specific behavior.
         """
 
     def handle_stuck_state(self):
         """Handle stuck state by adding a prompt to change strategy"""
-        stuck_prompt = "\
-        Observed duplicate responses. Consider new strategies and avoid repeating ineffective paths already attempted."
-        self.next_step_prompt = f"{stuck_prompt}\n{self.next_step_prompt}"
-        logger.warning(f"Agent detected stuck state. Added prompt: {stuck_prompt}")
+        # stuck_prompt = "\
+        # Observed duplicate responses. Consider new strategies and avoid repeating ineffective paths already attempted."
+        # self.next_step_prompt = f"{stuck_prompt}\n{self.next_step_prompt}"
+        # logger.warning(f"Agent detected stuck state. Added prompt: {stuck_prompt}")
 
     def is_stuck(self) -> bool:
         """Check if the agent is stuck in a loop by detecting duplicate content"""
-        if len(self.memory.messages) < 2:
-            return False
+        # if len(self.memory.messages) < 2:
+        #     return False
 
-        last_message = self.memory.messages[-1]
-        if not last_message.content:
-            return False
+        # last_message = self.memory.messages[-1]
+        # if not last_message.content:
+        #     return False
 
-        # Count identical content occurrences
-        duplicate_count = sum(
-            1
-            for msg in reversed(self.memory.messages[:-1])
-            if msg.role == "assistant" and msg.content == last_message.content
-        )
+        # # Count identical content occurrences
+        # duplicate_count = sum(
+        #     1
+        #     for msg in reversed(self.memory.messages[:-1])
+        #     if msg.role == "assistant" and msg.content == last_message.content
+        # )
 
-        return duplicate_count >= self.duplicate_threshold
+        # return duplicate_count >= self.duplicate_threshold
 
     @property
     def messages(self) -> List[Message]:

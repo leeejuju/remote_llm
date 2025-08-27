@@ -1,17 +1,15 @@
 import re
 import json
-from typing import Dict, Any
-from app.agents.base_agent import BaseAgent
-from app.schema.schema import QuestionAnswerState
-from app.agents.qa_agent import QAAgent
-from app.agents.vision_agent import VisionAgent
-from app.agents.doc_agent import WordWriterAgent
-
 from app.llm import LLM
-from app.tools.image_segmentation_tool import ImageSegmentationTool
+from typing import Dict, Any
+from app.agents.qa_agent import QAAgent
+from app.agents.doc_agent import DocAgent
+from app.schema import QuestionAnswerState
+from app.agents.vision_agent import VisionAgent
+from app.agents.toolcall_agent import ToolCallAgent
 from app.tools.image_segmentation_tool import ImageSegmentationTool
 
-class SuperVisorAgent(BaseAgent):
+class SuperVisorAgent(ToolCallAgent):
     def __init__(self, llm: LLM):
         self.llm = llm
         self.agents = {
@@ -20,7 +18,10 @@ class SuperVisorAgent(BaseAgent):
             'segmentation': ImageSegmentationTool(),
             # 'detection': DetectionAgent(llm)
         }
-        self.word_agent = WordWriterAgent()
+        self.word_agent = DocAgent()
+
+
+    
     
     async def process_request(self, state: QuestionAnswerState) -> QuestionAnswerState:
         """协调处理请求"""
@@ -32,7 +33,7 @@ class SuperVisorAgent(BaseAgent):
         agent_name = await self._select_agent(intent_analysis)
         
         # 第三步：调用选定的Agent
-        selected_agent = self.agents[agent_name]
+        selected_agent: ToolCallAgent = self.agents[agent_name]
         result: QuestionAnswerState = await selected_agent.process_question(state)
         if agent_name == "vision":
             self.word_agent.write_analysis(result, title="视觉分析结果")

@@ -5,7 +5,7 @@ from pydantic import Field
 
 from app.agents.base_agent import BaseAgent
 from app.llm import LLM
-from app.schema.schema import AgentState, Memory
+from app.schema import AgentState, Memory
 
 
 class ReActAgent(BaseAgent, ABC):
@@ -24,15 +24,15 @@ class ReActAgent(BaseAgent, ABC):
 
     @abstractmethod
     async def think(self) -> bool:
-        """处理当前状态，确定下一步的动作 Process current state and decide next action"""
+        """处理当前状态，确定下一步的动作"""
 
     @abstractmethod
     async def act(self) -> str:
-        """执行模型思考后的决定Execute decided actions"""
+        """执行模型思考后的决定"""
 
     async def step(self) -> str:
-        """单步执行：单出思考/单纯执行 Execute a single step: think and act."""
+        """单步执行：单出思考/单纯执行"""
         should_act = await self.think()
         if not should_act:
-            return "思考完成，无需额外行动 Thinking complete - no action needed"
+            return "思考完成，无需额外行动"
         return await self.act()

@@ -2,7 +2,7 @@ from docx import Document
 from docx.oxml.ns import qn
 from docx.shared import Pt, Inches
 from app.agents.base_agent import BaseAgent
-from app.schema.schema import QuestionAnswerState
+from app.schema import QuestionAnswerState
 
 
 class DocAgent(BaseAgent):

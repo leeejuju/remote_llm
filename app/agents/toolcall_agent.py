@@ -1,15 +1,15 @@
-import asyncio
 import json
-from typing import Any, List, Optional, Union
-
+import asyncio
 from pydantic import Field
-
+from app.logger import logger
+from typing import Any, List, Optional, Union
 from app.agents.react_agent import ReActAgent
 from app.exceptions import TokenLimitExceeded
-from app.logger import logger
 from app.prompt import NEXT_STEP_PROMPT, SYSTEM_PROMPT
-from app.schema import TOOL_CHOICE_TYPE, AgentState, Message, ToolCall, ToolChoice
-from app.tool import CreateChatCompletion, Terminate, ToolCollection
+from app.tools import CreateChatCompletion, Terminate, ToolCollection
+
+from app.schema import ToolChoice, TOOL_CHOICE_TYPE, AgentState, Message, ToolCall, ToolChoice
+
 
 TOOL_CALL_REQUIRED = "Tool calls required but none provided"
 
@@ -18,7 +18,7 @@ class ToolCallAgent(ReActAgent):
     """基础的智能体类，用于处理工具或函数调用，提供高层次的抽象。"""
 
     name: str = "toolcall"
-    description: str = "an agent that can execute tool calls."
+    description: str = "工具执行的Agent智能体"
 
     system_prompt: str = SYSTEM_PROMPT
     next_step_prompt: str = NEXT_STEP_PROMPT
@@ -26,6 +26,7 @@ class ToolCallAgent(ReActAgent):
     available_tools: ToolCollection = ToolCollection(
         CreateChatCompletion(), Terminate()
     )
+
     tool_choices: TOOL_CHOICE_TYPE = ToolChoice.AUTO  # type: ignore
     special_tool_names: List[str] = Field(default_factory=lambda: [Terminate().name])
 
@@ -36,7 +37,7 @@ class ToolCallAgent(ReActAgent):
     max_observe: Optional[Union[int, bool]] = None
 
     async def think(self) -> bool:
-        """Process current state and decide next actions using tools"""
+        """决定下一步的动作,是否需要调用工具"""
         if self.next_step_prompt:
             user_msg = Message.user_message(self.next_step_prompt)
             self.messages += [user_msg]
@@ -56,11 +57,11 @@ class ToolCallAgent(ReActAgent):
         except ValueError:
             raise
         except Exception as e:
-            # Check if this is a RetryError containing TokenLimitExceeded
+            # 判断Token的数量是否超过上限
             if hasattr(e, "__cause__") and isinstance(e.__cause__, TokenLimitExceeded):
                 token_limit_error = e.__cause__
                 logger.error(
-                    f"🚨 Token limit error (from RetryError): {token_limit_error}"
+                    f"🚨 Token到达上限: {token_limit_error}"
                 )
                 self.memory.add_message(
                     Message.assistant_message(
@@ -79,13 +80,13 @@ class ToolCallAgent(ReActAgent):
         # Log response info
         logger.info(f"✨ {self.name}'s thoughts: {content}")
         logger.info(
-            f"🛠️ {self.name} selected {len(tool_calls) if tool_calls else 0} tools to use"
+            f"🛠️ {self.name} 选择 {len(tool_calls) if tool_calls else 0} 个工具，进行处理"
         )
         if tool_calls:
             logger.info(
-                f"🧰 Tools being prepared: {[call.function.name for call in tool_calls]}"
+                f"🧰工具调用完成: {[call.function.name for call in tool_calls]}"
             )
-            logger.info(f"🔧 Tool arguments: {tool_calls[0].function.arguments}")
+            logger.info(f"🔧 当前工具参数为: {tool_calls[0].function.arguments}")
 
         try:
             if response is None:
@@ -128,13 +129,13 @@ class ToolCallAgent(ReActAgent):
             return False
 
     async def act(self) -> str:
-        """调用工具,处理运行结果Execute tool calls and handle their results"""
+        """调用工具,处理运行结果"""
         if not self.tool_calls:
             if self.tool_choices == ToolChoice.REQUIRED:
                 raise ValueError(TOOL_CALL_REQUIRED)
 
             # Return last message content if no tool calls
-            return self.messages[-1].content or "无结果, No content or commands to execute"
+            return self.messages[-1].content or "无结果或命令可供执行"
 
         results = []
         for command in self.tool_calls:
@@ -163,7 +164,7 @@ class ToolCallAgent(ReActAgent):
         return "\n\n".join(results)
 
     async def execute_tool(self, command: ToolCall) -> str:
-        """Execute a single tool call with robust error handling"""
+        """执行一次工具调用，并且在过程中处理各种可能的错误，保证程序不会因为工具报错而中断。"""
         if not command or not command.function or not command.function.name:
             return "Error: Invalid command format"
 
