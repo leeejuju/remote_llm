@@ -4,17 +4,18 @@ import base64
 import numpy as np
 from ultralytics import YOLO
 from PIL import Image
-from app.base import BaseTool
+from app.config import config
 from langchain_core.tools import tool
 
 
 @tool
-class ImageSegmentationTool(BaseTool):
+class ImageSegmentationTool:
 
 
     def __init__(self):
         # 使用支持分割的YOLO模型
-        self.model = YOLO(r'app\model\yolo11x-seg.pt')
+        model_path = config.model_path(model_name="yolo11x-seg.pt")
+        self.model = YOLO(model_path)
 
     
     def _image_to_bytes(self, image: np.ndarray, format: str = 'jpg') -> bytes:
